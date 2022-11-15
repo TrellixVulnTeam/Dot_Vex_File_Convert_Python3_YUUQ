@@ -20,7 +20,26 @@ def extract_vex(vex_file_location: str, temp_location: str, progress):
         os.mkdir(temp_location)
     progress("extracting json from .vex tar file")
     with tarfile.open(vex_file_location) as vex_file:
-        vex_file.extractall(temp_location)
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(vex_file, temp_location)
     progress("json extracted")
 
 
